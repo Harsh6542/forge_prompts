@@ -123,6 +123,9 @@ Return ONLY JSON:
 | HEIC images failing upload | Browser doesn't convert HEIC | Added sharp HEIC→JPEG conversion in `validateAndPreprocessImage` |
 | Sarvam STT timeout on long audio | Audio > 10 min hits API limit | Added duration check — reject > 5 min, warn at > 2 min |
 | Video frame extraction on Windows | ffmpeg binary path issue | Use `@ffmpeg-installer/ffmpeg` npm package for cross-platform binary |
+| Sarvam STT 400 on every request | Sarvam deprecated model `saarika:v1` | Switched to `saaras:v3` in `SarvamService.transcribeAudio` (2026-10-31) |
+| ffprobe not found for video probing | `@ffmpeg-installer/ffmpeg` ships no ffprobe binary | Added `ffprobe-static` package; resolve binary via `require('ffprobe-static').path` |
+| Pixtral JSON parse failure | Raw newline inside JSON string literal | `parseModelJson` repair pass converts raw control chars to spaces before retry |
 
 ---
 
@@ -258,6 +261,10 @@ type PolicyAgentEvent =
 | Hindi queries returning English chunks | Query not translated before embedding | Added translation step before embed call |
 | Long policy answers getting cut off | mistral-large max_tokens too low | Increased to 1500 tokens |
 | Voice generation failing silently | Sarvam TTS base64 decode error | Added try-catch with null fallback |
+| Sarvam translate 400 on streaming answers | `mayura:v1` rejects input > 1000 chars; streamed answers run ~1500 | `splitBySentence` slices at sentence boundaries ≤ 900 chars, translated sequentially, joined |
+| Sarvam TTS 400 (speaker `meera` rejected) | `bulbul:v1`/`v2` deprecated by Sarvam | Switched to `bulbul:v3` + speaker `priya`; text sliced ≤ 450 chars per request, WAV PCM payloads stitched (`concatWav`) |
+| Intermittent `fetch failed` in long-running server | Undici stale pooled sockets after network blips | `fetchWithRetry` wrapper (retries transient codes) + global undici Agent `keepAliveTimeout: 1s` |
+| Voice URL served as `application/octet-stream` | Cloudinary `raw` resource type doesn't sniff audio | `uploadAudioBuffer` — data-URI upload with `resource_type: video` → proper `audio/wav` |
 
 ---
 
@@ -374,6 +381,8 @@ interface GrievanceTriageResult {
 |-------|-----------|------------|
 | pixtral returning non-JSON | Markdown code fences in response | Added JSON.parse after stripping ```json wrappers |
 | Severity always HIGH for text-only | No image → imageSeverity defaulted to 10 | Changed default imageSeverity to 5 when no image |
+| Text-severity call 403 (`tier_not_allowed`) | API key tier blocks `mistral-large-latest` chat | `generateChatCompletion` runs `mistral-small-latest` first, auto-falls back to `pixtral-12b-2409` on tier/rate errors |
+| Text-only reports underrated vs spec formula | Spec formula (image 5 × 0.6 + text × 0.4) caps a sev-9 report at ~5.6 | No-image scoring reweighted: text 80% + neutral image 20% (documented in `aiAnalysis.scoringModel`) |
 
 ---
 
@@ -495,6 +504,13 @@ type AgentStepType =
 > ⚠️ In demo mode (`DEMO_MODE=true`), the agent simulates portal navigation rather than
 > making real form submissions. This protects citizens' data and avoids unintended actions.
 > Each step is delayed by 1.5–2.5s to simulate realistic navigation speed.
+
+### Socket Event Names (implementation notes)
+- Client → server: `start_task` (AgentTaskDto) · `captcha_solved` `{ taskId }`
+- Server → client: `connected` (greeting with demoMode flag) · `agent_step` (AgentStep) · `task_done` (AgentTaskDoneEvent `{ taskId, trackingNumber, url?, error? }`)
+- Transport: connect with default transports (long-polling upgrade) — websocket-only handshakes can fail.
+- If a live gov portal is unreachable from the agent environment, the loop continues on a local demo placeholder page so the full script (screenshots, AI decision, fills, CAPTCHA, reference number) still runs.
+- Sensitive fields (Aadhaar, bank account) are masked in `fieldValue` inside step events.
 
 ---
 
@@ -660,6 +676,19 @@ interface VerificationEvidence {
 }
 ```
 
+### Known Issues & Fixes
+
+| Issue | Root Cause | Fix Applied |
+|-------|-----------|------------|
+| No web evidence available | `SERPAPI_KEY` unset in `.env` | Degrade implemented: Stage 2 skipped (search event notes it), verdict defaults `UNVERIFIED` @ 0.2; adding the key re-enables evidence with no code change |
+| serpapi rate limits / hiccup | 429s and throttled shared keys | `serpSearch` returns `[]` on non-200 with a logger warning; per-claim site search wrapped in catch |
+| Verdict model tier | Documented `mistral-large-latest` blocked by key tier (403) | Shared `generateChatCompletion` fallback chain (`mistral-small-latest` → `pixtral-12b-2409`) used for synthesis + extraction |
+
+### Degrade Behavior: SERPAPI_KEY absent
+> With `SERPAPI_KEY` unset, Stage 2 is skipped (the `searching` SSE event says so) and the verdict defaults to
+> `UNVERIFIED` @ confidence 0.2 with citizen guidance. Claim extraction and image forensics still run, so
+> the pipeline stays useful; setting the key re-enables web evidence automatically.
+
 ---
 
 ## Shared AI Services
@@ -670,22 +699,24 @@ Centralized wrapper for all Mistral API calls.
 
 | Method | Model Used | Purpose |
 |--------|-----------|---------|
-| `generateChatCompletion(messages, model?)` | `mistral-large-latest` | Single non-streaming response |
-| `streamChatCompletion(messages, model?)` | `mistral-large-latest` | Token-by-token AsyncGenerator |
-| `analyzeImageWithPrompt(imageUrl, prompt)` | `pixtral-12b-2409` | Vision understanding |
-| `generateEmbedding(text)` | `mistral-embed` | Single 1024-dim embedding |
-| `generateEmbeddingBatch(texts[])` | `mistral-embed` | Batch embeddings for ingestion |
-| `translateWithMistral(text, targetLang)` | `mistral-large-latest` | Fallback translation |
+| `generateChatCompletion(messages, opts?)` | `mistral-small-latest` → fallback `pixtral-12b-2409` | Single non-streaming response |
+| `streamChatCompletion(messages, opts?)` | `pixtral-12b-2409` | Token-by-token AsyncGenerator |
+| `analyzeImageWithPrompt(imageUrl, prompt)` | `pixtral-12b-2409` | OCR-style vision analysis (fixed `PixtralImageAnalysis` shape) |
+| `analyzeImageFreeform<T>(prompt, image)` | `pixtral-12b-2409` | Prompt-agnostic vision JSON (grievance forensics, fact-check forensics) |
+| `generateEmbedding(text)` / `generateEmbeddingBatch(texts[])` | `mistral-embed` | 1024-dim embeddings (Policy RAG) |
+| `translateWithMistral(text, targetLang)` | (not implemented) | Sarvam covers translation; see below |
 
 ### SarvamVoiceService (`shared/ai/voice.service.ts`)
 
 | Method | Sarvam Endpoint | Purpose |
 |--------|----------------|---------|
-| `transcribeAudio(audioBuffer, langCode)` | `/speech-to-text` | STT (saarika:v1) |
-| `translateText(text, sourceLang, targetLang)` | `/translate` | Text translation |
+| `transcribeAudio(audioBuffer, langCode)` | `/speech-to-text` | STT (`saaras:v3`) |
+| `translateText(text, sourceLang, targetLang)` | `/translate` | Text translation (mayura:v1, sentence-sliced ≤ 900 chars) |
 | `translateToEnglish(text, sourceLang)` | `/translate` | Pre-RAG translation |
-| `synthesizeSpeech(text, langCode)` | `/text-to-speech` | TTS (bulbul:v1, meera) |
+| `synthesizeSpeech(text, langCode)` | `/text-to-speech` | TTS (`bulbul:v3`, speaker `priya`; slices ≤ 450 chars, WAV PCM stitched) |
 | `detectInputLanguage(text)` | (local heuristic + Mistral fallback) | Language detection |
+
+All outbound provider calls go through `fetchWithRetry` (`shared/ai/fetch.util.ts`) — retries transient network errors (ECONNRESET, ECONNREFUSED, ETIMEDOUT, EPIPE, EAI_AGAIN, UND_ERR_SOCKET); `main.ts` sets a global undici agent with `keepAliveTimeout: 1s` to evict dead pooled sockets.
 
 ---
 
@@ -713,6 +744,13 @@ Centralized wrapper for all Mistral API calls.
 | 2026-10-31 | Browser Service Agent | Initial demo-mode implementation | v1 |
 | 2026-10-31 | Fact-Check Agent | Initial implementation | v1 |
 | 2026-10-31 | Multimodal Input Pipeline | Added text/audio/image/video pipelines with translation | v1 |
+| 2026-10-31 | Multimodal Input Pipeline | Implemented pipeline in NestJS; STT model → `saaras:v3` (Sarvam deprecation); added `ffprobe-static`; JSON repair for Pixtral output | v2 |
+| 2026-11-01 | Policy RAG Agent | Full module shipped: entity/ingest/SSE agent/controller; KB seeded via shared `PolicyIngestService` (8 docs → 22 chunks); end-to-end live-tested (EN+HI queries, streaming, translation, voice) | v2 |
+| 2026-11-01 | Shared AI services | TTS → `bulbul:v3` + `priya`; chunked translate (≤900) & TTS (≤450); `fetchWithRetry` + short keep-alive; Cloudinary `uploadAudioBuffer` (audio/wav) | v2 |
+| 2026-11-01 | Grievance Triage Agent | Full module shipped: entity + multipart `/grievance/submit` + `/grievance/track/:id`; live-tested text-only (CRITICAL/24h) and image forensics (pothole sev 8 → CRITICAL); Pixtral freeform + chat fallback chain added | v1 |
+| 2026-11-01 | Shared AI services | `generateChatCompletion` added: `mistral-small-latest` primary, auto-fallback `pixtral-12b-2409` (key tier blocks `mistral-large-latest` — 403 `tier_not_allowed`); generic `analyzeImageFreeform<T>` for non-OCR vision prompts | v2 |
+| 2026-11-01 | Browser Service Agent | Live-tested: socket.io `/agent` gateway + Playwright demo loop on scholarships.gov.in — real navigation, Cloudinary screenshots, Mistral page decision (PM YASASVI path), masked fills, CAPTCHA handshake → `NSP-2026-EMYE8P` | v1 |
+| 2026-11-01 | Fact-Check Agent | Full module shipped: SSE `/factcheck/verify` (claims → SerpAPI evidence → Pixtral forensics → verdict → MySQL); live-tested offline degrade (scam text → FALSE 0.95) and image forensics (authentic 0.1 → UNVERIFIED 0.2) | v1 |
 
 ---
 
