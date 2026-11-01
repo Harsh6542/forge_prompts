@@ -70,7 +70,7 @@ export class BrowserAgentService {
     }
   }
 
-  async runTask(client: Socket, dto: AgentTaskDto): Promise<void> {
+  async runTask(client: Socket, dto: AgentTaskDto, reportedById: number | null = null): Promise<void> {
     const service = SERVICE_PORTALS[dto.serviceType];
     const taskId = `TASK-${randomSuffix(6)}`;
     let stepId = 0;

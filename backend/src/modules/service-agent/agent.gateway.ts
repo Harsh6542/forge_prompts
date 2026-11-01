@@ -7,6 +7,7 @@ import {
   WebSocketGateway,
   WebSocketServer,
 } from '@nestjs/websockets';
+import { JwtService } from '@nestjs/jwt';
 import { Server, Socket } from 'socket.io';
 import { BrowserAgentService } from './browser.agent.js';
 import type { AgentTaskDto } from './agent-step.js';
@@ -21,9 +22,33 @@ export class AgentGateway implements OnGatewayConnection {
   @WebSocketServer()
   server!: Server;
 
-  constructor(private readonly agent: BrowserAgentService) {}
+  constructor(
+    private readonly agent: BrowserAgentService,
+    private readonly jwtService: JwtService,
+  ) {}
 
   handleConnection(client: Socket): void {
+    // JWT handshake required: client.io = io(url, { auth: { token: <jwt> } })
+    const token =
+      (client.handshake.auth?.token as string | undefined) ??
+      (client.handshake.headers['authorization'] as string | undefined)?.replace(/^Bearer /i, '');
+
+    let userId: number | null = null;
+    try {
+      const payload = this.jwtService.verify<{ sub: number }>(token ?? '', {
+        algorithms: ['HS256'],
+      });
+      userId = payload?.sub ?? null;
+    } catch {
+      userId = null;
+    }
+    if (!userId) {
+      this.logger.warn(`Agent socket rejected (unauthenticated): ${client.id}`);
+      client.emit('auth_error', { message: 'Login required — connect with auth: { token }' });
+      client.disconnect(true);
+      return;
+    }
+    client.data.userId = userId;
     this.logger.log(`Agent client connected: ${client.id}`);
     client.emit('connected', { message: 'CivicPulse browser agent ready', demoMode: true });
   }
@@ -31,7 +56,7 @@ export class AgentGateway implements OnGatewayConnection {
   @SubscribeMessage('start_task')
   handleStartTask(@MessageBody() payload: AgentTaskDto, @ConnectedSocket() client: Socket): unknown {
     void this.agent
-      .runTask(client, payload)
+      .runTask(client, payload, client.data?.userId ?? null)
       .catch((err: Error) => client.emit('task_done', { error: err.message, trackingNumber: null }));
     return { accepted: true, message: 'Agent task accepted — steps stream via agent_step' };
   }

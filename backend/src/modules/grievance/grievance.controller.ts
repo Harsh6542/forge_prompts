@@ -6,6 +6,7 @@ import {
   HttpStatus,
   Param,
   Post,
+  Req,
   UploadedFiles,
   UseGuards,
   UseInterceptors,
@@ -14,6 +15,8 @@ import { FilesInterceptor } from '@nestjs/platform-express';
 import { ApiConsumes, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { Throttle, ThrottlerGuard } from '@nestjs/throttler';
 import { memoryStorage } from 'multer';
+import { AuthGuard } from '../../guards/auth.guard.js';
+import type { AuthedRequestUser } from '../../auth/types.js';
 import { GrievanceTriageService } from './grievance.agent.js';
 import { GrievanceSubmitDto } from './grievance.dto.js';
 import { Grievance } from './grievance.entity.js';
@@ -24,9 +27,10 @@ import { Grievance } from './grievance.entity.js';
 export class GrievanceController {
   constructor(private readonly triage: GrievanceTriageService) {}
 
-  @ApiOperation({ summary: 'Submit grievance — AI severity triage + department routing' })
+  @ApiOperation({ summary: 'Submit grievance — AI severity triage + department routing (auth required)' })
   @Post('submit')
   @HttpCode(HttpStatus.OK)
+  @UseGuards(AuthGuard)
   @Throttle({ default: { limit: 10, ttl: 60_000 } })
   @ApiConsumes('multipart/form-data')
   @UseInterceptors(
@@ -37,12 +41,13 @@ export class GrievanceController {
   )
   async submit(
     @Body() dto: GrievanceSubmitDto,
-    @UploadedFiles() media?: Express.Multer.File[],
+    @UploadedFiles() media: Express.Multer.File[] | undefined,
+    @Req() request: { user: AuthedRequestUser },
   ) {
     return this.triage.triageSubmit({
       dto,
       mediaFiles: (media ?? []).filter((f) => f.mimetype.startsWith('image/')),
-      reportedById: null,
+      reportedById: request.user?.id ?? null,
     });
   }
 

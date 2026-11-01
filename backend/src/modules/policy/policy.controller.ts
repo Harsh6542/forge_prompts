@@ -27,6 +27,7 @@ export class PolicyController {
 
   @ApiOperation({ summary: 'RAG answer stream (SSE) — 6-stage pipeline' })
   @Post('query')
+  @UseGuards(AuthGuard)
   @Throttle({ default: { limit: 15, ttl: 60_000 } })
   async query(@Body() dto: PolicyQueryDto, @Res() res: Response) {
     res.setHeader('Content-Type', 'text/event-stream');

@@ -2,6 +2,7 @@ import { Body, Controller, Post, Res, UseGuards } from '@nestjs/common';
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
 import { Throttle, ThrottlerGuard } from '@nestjs/throttler';
 import type { Response } from 'express';
+import { AuthGuard } from '../../guards/auth.guard.js';
 import { FactCheckAgentService } from './factcheck.agent.js';
 import { FactCheckRequestDto } from './factcheck.dto.js';
 
@@ -13,6 +14,7 @@ export class FactCheckController {
 
   @ApiOperation({ summary: 'Verify a viral claim (SSE pipeline: claims → evidence → forensics → verdict)' })
   @Post('verify')
+  @UseGuards(AuthGuard)
   @Throttle({ default: { limit: 10, ttl: 60_000 } })
   async verify(@Body() dto: FactCheckRequestDto, @Res() res: Response) {
     res.setHeader('Content-Type', 'text/event-stream');
