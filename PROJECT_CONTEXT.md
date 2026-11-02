@@ -46,26 +46,20 @@ India's 1.4 billion citizens face four critical governance gaps:
 ## Tech Stack
 
 ### Frontend
-- **Framework**: React 18 + Vite (TypeScript, SPA)
-- **Routing**: react-router-dom v6
-- **Styling**: Tailwind CSS + shadcn/ui (New York style, Slate base)
-- **Animations**: Framer Motion (all transitions and micro-interactions)
-- **State**: Zustand (per-feature stores)
-- **HTTP**: Axios (with JWT interceptor)
-- **Real-time**: socket.io-client (WebSocket for agent terminal)
-- **SSE**: Native EventSource API (via custom `use-sse-stream.ts` hook)
-- **Maps**: Leaflet + react-leaflet (grievance heatmap)
-- **Charts**: Recharts (dashboard analytics)
-- **Voice Input**: Web Speech API
-- **QR Code**: qrcode.react (tracking ID display)
-- **Markdown**: react-markdown + remark-gfm (policy answers)
+- **Framework**: React 19 + Vite (TypeScript, SPA)
+- **Routing**: react-router-dom v7 (JWT-protected routes; one page per route in `src/pages/`)
+- **Styling**: Hand-rolled flat CSS theme (`src/index.css`) — light e-gov look, no UI framework
+- **HTTP**: Native fetch with JWT header injection (`src/lib/http-client.api.ts`)
+- **Real-time**: socket.io-client 4.x (WebSocket for agent terminal, JWT handshake via `auth: { token }`)
+- **SSE**: POST-based fetch stream reader (EventSource cannot POST; `streamSse` in http-client)
+- **Env**: `VITE_API_URL` / `VITE_WS_URL` consumed from `frontend/.env`
 
 ### Backend
 - **Framework**: NestJS (TypeScript, modular)
 - **ORM**: Sequelize + sequelize-typescript
 - **Database**: MySQL 8.0
 - **AI LLM**: Mistral API
-  - Chat: `mistral-large-latest`
+  - Chat: `mistral-small-latest` (primary; `pixtral-12b-2409` auto-fallback on tier/rate errors — key tier blocks `mistral-large-latest`)
   - Vision: `pixtral-12b-2409`
   - Embeddings: `mistral-embed` (1024-dim)
 - **Voice/Language**: Sarvam AI (STT, TTS, Translation — 11 Indian languages)
@@ -204,11 +198,11 @@ civicpulse-ai/                          ← monorepo root
 
 | Model | Provider | Used For |
 |-------|----------|---------|
-| `mistral-large-latest` | Mistral AI | Policy Q&A, grievance text analysis, verdict synthesis |
-| `pixtral-12b-2409` | Mistral AI | Grievance image analysis, deepfake forensics |
+| `mistral-small-latest` | Mistral AI | Policy Q&A, grievance text analysis, verdict synthesis (auto-fallback: `pixtral-12b-2409`) |
+| `pixtral-12b-2409` | Mistral AI | Grievance image analysis, deepfake forensics, agent page decisions, streaming |
 | `mistral-embed` | Mistral AI | Generating 1024-dim document + query embeddings |
-| `saarika:v1` | Sarvam AI | Indian language Speech-to-Text (11 languages) |
-| `bulbul:v1` | Sarvam AI | Indian language Text-to-Speech (speaker: meera) |
+| `saaras:v3` | Sarvam AI | Indian language Speech-to-Text (deprecates `saarika:v1`) |
+| `bulbul:v3` | Sarvam AI | Indian language Text-to-Speech (speaker: priya; deprecates `bulbul:v1`) |
 | Sarvam Translate | Sarvam AI | Indian language translation (any ↔ any) |
 
 ---
@@ -330,7 +324,7 @@ VITE_DEMO_MODE=false
 | 1–3 | LOW | 30 days | Green |
 
 > Score = `imageSeverity × 0.6 + textSeverity × 0.4`  
-> Image analysis from `pixtral-12b-2409`; text analysis from `mistral-large-latest`
+> Image analysis from `pixtral-12b-2409`; text analysis from `mistral-small-latest` (with `pixtral-12b-2409` fallback)
 
 ---
 
