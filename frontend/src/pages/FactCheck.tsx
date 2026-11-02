@@ -101,8 +101,9 @@ export function FactCheck() {
       <div className="page-head">
         <h2>Fact Check</h2>
         <p>
-          Paste a forwarded message or attach a viral image. The pipeline extracts claims, looks for web
-          evidence, scans images for manipulation, and issues a verdict with confidence.
+          Got a WhatsApp forward saying the government is giving free money? Paste it here before you
+          share it. We hunt through official sources, scan the photo for signs of tampering, and give
+          you a straight answer — true, false or misleading — plus what you should actually do with it.
         </p>
       </div>
 

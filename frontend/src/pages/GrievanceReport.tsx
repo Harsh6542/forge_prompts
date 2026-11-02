@@ -61,8 +61,9 @@ export function GrievanceReport({ citizenName }: { citizenName: string }) {
       <div className="page-head">
         <h2>Report a Grievance</h2>
         <p>
-          Your report is scored by AI, routed to the responsible department, and gets a tracking ID you can
-          share. Photos improve severity accuracy.
+          See a broken road, dead street light or open drain? Take a photo, tell us where it is, and
+          you are done. We figure out how urgent the problem is, send it to the department actually
+          responsible, and hand you a tracking number you can use any time to ask what happened.
         </p>
       </div>
 

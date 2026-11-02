@@ -78,8 +78,10 @@ export function ServiceAgent() {
       <div className="page-head">
         <h2>Service Agent</h2>
         <p>
-          A supervised browser agent opens the official portal and fills the application form from your
-          profile. Runs in demo mode — no real submission is made.
+          Government forms are long, confusing and in the wrong language. Pick a service — scholarship,
+          PAN card, ration card — and our agent opens the official portal for you, fills your details
+          field by field, and ends with an application reference number. You watch every single step it
+          takes, live. Nothing real is submitted here; this is a safe demo of the full flow.
         </p>
       </div>
 

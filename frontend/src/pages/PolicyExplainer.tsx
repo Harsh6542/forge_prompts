@@ -75,7 +75,10 @@ export function PolicyExplainer() {
       <div className="page-head">
         <h2>Policy Explainer</h2>
         <p>
-          Answers are grounded in the ingested policy knowledge base and always cite the scheme's official portal.
+          Ask any question about a government scheme in your own language — what you are eligible for,
+          how much money you get, and exactly how to apply. Answers come straight from official documents,
+          in plain words, and are read aloud if you prefer listening. Nothing is guessed; every answer
+          names the scheme and its official portal.
         </p>
       </div>
 
