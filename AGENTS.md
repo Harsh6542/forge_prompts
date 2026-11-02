@@ -751,6 +751,8 @@ All outbound provider calls go through `fetchWithRetry` (`shared/ai/fetch.util.t
 | 2026-11-01 | Shared AI services | `generateChatCompletion` added: `mistral-small-latest` primary, auto-fallback `pixtral-12b-2409` (key tier blocks `mistral-large-latest` — 403 `tier_not_allowed`); generic `analyzeImageFreeform<T>` for non-OCR vision prompts | v2 |
 | 2026-11-01 | Browser Service Agent | Live-tested: socket.io `/agent` gateway + Playwright demo loop on scholarships.gov.in — real navigation, Cloudinary screenshots, Mistral page decision (PM YASASVI path), masked fills, CAPTCHA handshake → `NSP-2026-EMYE8P` | v1 |
 | 2026-11-01 | Fact-Check Agent | Full module shipped: SSE `/factcheck/verify` (claims → SerpAPI evidence → Pixtral forensics → verdict → MySQL); live-tested offline degrade (scam text → FALSE 0.95) and image forensics (authentic 0.1 → UNVERIFIED 0.2) | v1 |
+| 2026-11-01 | System-wide | Auth lockdown: JWT required on `/policy/query`, `/grievance/submit`, `/factcheck/verify`, WS `start_task` handshake; grievance persists `reportedById` from JWT; `/grievance/track/:id` stays public; live-tested 401/authed matrix + WS auth_error & connect | v2 |
+| 2026-11-02 | Frontend v1 | React 19 + Vite SPA rebuilt: react-router v7 routes (`/`, `/login`, `/policy`, `/grievances`, `/services`, `/factcheck`), JWT-protected routes, flat light e-gov theme; `VITE_API_URL`/`VITE_WS_URL` from `.env`; SSE via POST fetch reader; socket.io agent terminal with CAPTCHA flow + masked fields; verified `npm run build` + vite served + auth flows vs live backend | — |
 
 ---
 
