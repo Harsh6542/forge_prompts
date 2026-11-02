@@ -29,9 +29,9 @@ async function bootstrap() {
 
   // Swagger / OpenAPI setup
   const config = new DocumentBuilder()
-    .setTitle('CivicPulse AI API')
+    .setTitle('JanSetu API')
     .setDescription(
-      'Backend API for CivicPulse AI — citizen services including policy Q&A, grievance triage, browser automation, and fact-checking.',
+      'Backend API for JanSetu — citizen services including policy Q&A, grievance triage, browser automation, and fact-checking.',
     )
     .setVersion('1.0')
     .addTag('app')

@@ -50,7 +50,7 @@ export class AgentGateway implements OnGatewayConnection {
     }
     client.data.userId = userId;
     this.logger.log(`Agent client connected: ${client.id}`);
-    client.emit('connected', { message: 'CivicPulse browser agent ready', demoMode: true });
+    client.emit('connected', { message: 'JanSetu browser agent ready', demoMode: true });
   }
 
   @SubscribeMessage('start_task')

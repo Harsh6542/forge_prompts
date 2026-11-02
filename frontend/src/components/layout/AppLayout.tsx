@@ -24,14 +24,25 @@ export function AppLayout({ user, onSignedOut }: { user: AuthedUser | null; onSi
           <NavLink to="/" className="brand">
             <span className="brand-mark">CP</span>
             <span>
-              <div className="brand-name">CivicPulse AI</div>
-              <div className="brand-tag">Your AI-powered civic rights assistant</div>
+              <div className="brand-name">JanSetu</div>
+              <div className="brand-tag">AI-powered bridge between citizens &amp; governance</div>
             </span>
           </NavLink>
+          <nav className="site-nav">
+            {NAV_ITEMS.map((item) => (
+              <NavLink
+                key={item.to}
+                to={item.to}
+                className={({ isActive }) => (isActive ? 'nav-link active' : 'nav-link')}
+              >
+                {item.label}
+              </NavLink>
+            ))}
+          </nav>
           {user ? (
             <div className="userbox">
               <span>
-                Signed in as <b>{user.name}</b> ({user.role})
+                <b>{user.name}</b> · {user.role}
               </span>
               <button className="btn-quiet" onClick={signOut}>
                 Sign out
@@ -46,19 +57,6 @@ export function AppLayout({ user, onSignedOut }: { user: AuthedUser | null; onSi
           )}
         </div>
       </header>
-      <nav className="site-nav">
-        <div className="nav-inner">
-          {NAV_ITEMS.map((item) => (
-            <NavLink
-              key={item.to}
-              to={item.to}
-              className={({ isActive }) => (isActive ? 'nav-link active' : 'nav-link')}
-            >
-              {item.label}
-            </NavLink>
-          ))}
-        </div>
-      </nav>
       <main className="page">
         <Outlet />
       </main>

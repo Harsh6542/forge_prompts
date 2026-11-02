@@ -30,7 +30,7 @@ async function seedSuperadmin() {
     // Check if superadmin already exists
     const [existingRows]: any = await connection.execute(
       'SELECT * FROM users WHERE email = ? LIMIT 1',
-      ['superadmin@civicpulse.ai']
+      ['superadmin@jansetu.ai']
     );
 
     if (existingRows.length > 0) {
@@ -40,15 +40,16 @@ async function seedSuperadmin() {
     }
 
     // Create superadmin user
-    const passwordHash = '$2a$10$IhCvXkXkYqZ7mPmVQvntneEfKqZZ5cT6hSGQ7Ph8GqRlF.E.He.S6';
+    const passwordHash = '$2b$10$6E2Q/KfCzkMG2grj9Sc95.bG/jGRcZIbXmoF62lQ./OQnkSc9o9sW';
+    // Password for the above hash: Admin@JanSetu1 (used by all seeded admin accounts)
 
     await connection.execute(
       'INSERT INTO users (name, email, passwordHash, role, department, createdAt, updatedAt) VALUES (?, ?, ?, ?, ?, NOW(), NOW())',
-      ['Super Admin', 'superadmin@civicpulse.ai', passwordHash, 'superadmin', null]
+      ['Super Admin', 'superadmin@jansetu.ai', passwordHash, 'superadmin', null]
     );
 
     console.log('🎉 Superadmin user created successfully!\n');
-    console.log('   Email: superadmin@civicpulse.ai');
+    console.log('   Email: superadmin@jansetu.ai');
     console.log('   Role: superadmin');
     console.log('   Department: All departments');
     console.log('   Password: admin123 (change immediately!)');

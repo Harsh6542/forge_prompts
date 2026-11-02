@@ -1,6 +1,6 @@
-# 🏛️ CivicPulse AI — Project Context
+# 🏛️ JanSetu — Project Context
 
-> This document is the single source of truth for the CivicPulse AI project.
+> This document is the single source of truth for the JanSetu project.
 > Every team member and AI agent working on this codebase must read this first.
 > **Update this file whenever the project scope, stack, or structure changes.**
 
@@ -10,8 +10,8 @@
 
 | Field | Value |
 |-------|-------|
-| **Project Name** | CivicPulse AI |
-| **Tagline** | Your AI-Powered Civic Rights Assistant |
+| **Project Name** | JanSetu (जनसेतु) |
+| **Tagline** | Your AI-Powered Civic Rights Assistant — a bridge between citizens and governance |
 | **Hackathon Track** | Civic Pulse, Digital Governance & Public Information |
 | **Type** | Gen AI + Agentic AI Web Application (RAG-Based) |
 | **Status** | 🟡 In Development |
@@ -32,7 +32,7 @@ India's 1.4 billion citizens face four critical governance gaps:
 
 ## Solution Overview
 
-**CivicPulse AI** is a unified civic super-platform with four AI-powered features, each solving one of the problems above:
+**JanSetu** is a unified civic super-platform with four AI-powered features, each solving one of the problems above:
 
 | Feature | What It Does |
 |---------|-------------|

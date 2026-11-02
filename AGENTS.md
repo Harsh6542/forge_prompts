@@ -1,4 +1,4 @@
-# 🤖 CivicPulse AI — Agents Context & Prompt Log
+# 🤖 JanSetu — Agents Context & Prompt Log
 
 > This document defines every AI agent in the system: its purpose, workflow graph,
 > system prompts, input/output contracts, and evolution log.
@@ -181,10 +181,10 @@ Answers citizen questions about Indian government schemes, welfare programs, and
    [END]
 ```
 
-### System Prompt (Current Version: v2)
+### System Prompt (Current Version: v3)
 
 ```
-You are CivicPulse AI, an expert advisor on Indian government schemes, welfare programs,
+You are JanSetu, an expert advisor on Indian government schemes, welfare programs,
 and citizen rights. You serve ordinary Indian citizens — farmers, daily wage workers,
 students, small business owners — who need clear, actionable information.
 
@@ -213,6 +213,7 @@ MyScheme portal (myscheme.gov.in) or call the citizen helpline at 1800-11-2345."
 **Prompt Version History:**
 - `v1` (2026-10-31): Initial prompt. Missing formatting structure.
 - `v2` (2026-10-31): Added emoji section headers, fallback message, specific instructions.
+- `v3` (2026-11-02): Agent identity rebranded CivicPulse AI → JanSetu (app name change).
 
 ### Input Contract
 
@@ -753,6 +754,7 @@ All outbound provider calls go through `fetchWithRetry` (`shared/ai/fetch.util.t
 | 2026-11-01 | Fact-Check Agent | Full module shipped: SSE `/factcheck/verify` (claims → SerpAPI evidence → Pixtral forensics → verdict → MySQL); live-tested offline degrade (scam text → FALSE 0.95) and image forensics (authentic 0.1 → UNVERIFIED 0.2) | v1 |
 | 2026-11-01 | System-wide | Auth lockdown: JWT required on `/policy/query`, `/grievance/submit`, `/factcheck/verify`, WS `start_task` handshake; grievance persists `reportedById` from JWT; `/grievance/track/:id` stays public; live-tested 401/authed matrix + WS auth_error & connect | v2 |
 | 2026-11-02 | Frontend v1 | React 19 + Vite SPA rebuilt: react-router v7 routes (`/`, `/login`, `/policy`, `/grievances`, `/services`, `/factcheck`), JWT-protected routes, flat light e-gov theme; `VITE_API_URL`/`VITE_WS_URL` from `.env`; SSE via POST fetch reader; socket.io agent terminal with CAPTCHA flow + masked fields; verified `npm run build` + vite served + auth flows vs live backend | — |
+| 2026-11-02 | Frontend v1.1 | Restyled to modern white/blue (Aceternity-style): glass sticky header, pill nav, gradient CTAs, spotlight-hover feature cards, SVG icon tiles, dot-grid page background; rebranded app name CivicPulse AI → **JanSetu (जनसेतु)** across UI, Swagger title, WS greeting, Playwright UA/demo page, agent identity | — |
 
 ---
 

@@ -45,6 +45,13 @@ export function Login({ onSignedIn }: { onSignedIn: () => void }) {
   return (
     <div className="auth-wrap">
       <div className="auth-card">
+        <div className="auth-brand">
+          <span className="brand-mark">CP</span>
+          <span>
+            <h1>JanSetu</h1>
+            <p>Schemes · Grievances · Services · Verification</p>
+          </span>
+        </div>
         <div className="auth-switch">
           <button className={mode === 'login' ? 'on' : ''} onClick={() => setMode('login')}>
             Sign in

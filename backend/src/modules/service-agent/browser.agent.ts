@@ -109,7 +109,7 @@ export class BrowserAgentService {
       browser = await chromium.launch({ headless: true });
       const page = await browser.newPage({
         viewport: { width: 1280, height: 800 },
-        userAgent: 'Mozilla/5.0 (X11; Linux x86_64) CivicPulseAgent/1.0',
+        userAgent: 'Mozilla/5.0 (X11; Linux x86_64) JanSetuAgent/1.0',
       });
 
       // Navigate to the portal (unreachable gov sites fall back to a local placeholder)
@@ -295,7 +295,7 @@ async function openPortal(page: Page, url: string): Promise<boolean> {
 async function setDemoPlaceholder(page: Page, service: ServicePortalDef): Promise<void> {
   await page.setContent(
     `<html><body style="font-family:sans-serif;padding:40px">
-      <h2>CivicPulse Demo — ${service.portalName}</h2>
+      <h2>JanSetu Demo — ${service.portalName}</h2>
       <p>Live portal is not reachable in this environment. The agent continues in DEMO MODE with a simulated form.</p>
       <form>
         <input placeholder="Full Name"/> <input placeholder="Mobile"/><input placeholder="Email"/>
